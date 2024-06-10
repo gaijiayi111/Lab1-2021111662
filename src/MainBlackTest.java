@@ -53,7 +53,7 @@ public class MainBlackTest extends ApplicationTest {
         clickOn(InputField).write("New");
         TextField resultField = lookup("#result").query();
         clickOn("Execute");
-        FxAssert.verifyThat(resultField, TextInputControlMatchers.hasText("Please input two words connected with comma! "));
+        FxAssert.verifyThat(resultField, TextInputControlMatchers.hasText("Please input two words connected with comma!"));
     }
     @Test
     public void testCalculateShortestPath_3() {
@@ -65,7 +65,7 @@ public class MainBlackTest extends ApplicationTest {
         clickOn(InputField).write("New like");
         TextField resultField = lookup("#result").query();
         clickOn("Execute");
-        FxAssert.verifyThat(resultField, TextInputControlMatchers.hasText("Please input two words connected with comma! "));
+        FxAssert.verifyThat(resultField, TextInputControlMatchers.hasText("Please input two words connected with comma!"));
     }
     @Test
     public void testCalculateShortestPath_4() {
@@ -77,7 +77,7 @@ public class MainBlackTest extends ApplicationTest {
         clickOn(InputField).write("New,and,please");
         TextField resultField = lookup("#result").query();
         clickOn("Execute");
-        FxAssert.verifyThat(resultField, TextInputControlMatchers.hasText("Please input two words connected with comma! "));
+        FxAssert.verifyThat(resultField, TextInputControlMatchers.hasText("Please input two words connected with comma!"));
     }
 
 }
