@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.testfx.api.FxAssert;
 import org.testfx.api.FxToolkit;
 import org.testfx.framework.junit.ApplicationTest;
-import org.testfx.matcher.control.LabeledMatchers;
 import org.testfx.matcher.control.TextInputControlMatchers;
 
 public class MainBlackTest extends ApplicationTest {

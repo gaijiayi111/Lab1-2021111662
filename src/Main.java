@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
+
 public class Main extends Application {
     // 路径信息类，包含权重和颜色信息
     static class PathInfo {
@@ -46,10 +47,13 @@ public class Main extends Application {
     private static TextField processField = new TextField();
     private static Label prompt = new Label();
     private static volatile boolean stopTraversal;// 用于控制函数是否停止的标志
+    private static List<String> bridgeWords = new ArrayList<>();
+    private static String[] words ;
     @Override
     public void start(Stage primaryStage) {
         // 创建文件路径输入框和按钮
         TextField filePathField = new TextField();
+        filePathField.setId("filePath");
         Button loadFileButton = new Button("Load File");
         loadFileButton.setOnAction(event -> {
             String filePath = filePathField.getText();
@@ -102,7 +106,7 @@ public class Main extends Application {
             openFunctionResultWindow("Please input a sentence", 3);
         });
 
-        Button button4 = new Button(" Calculate shortest path");
+        Button button4 = new Button("Calculate shortest path");
         button4.setOnAction(event -> {
             openFunctionResultWindow("Please input two words connected by comma", 4);
         });
@@ -125,17 +129,34 @@ public class Main extends Application {
         String [] parameter = input.split(",");
         switch (funNo) {
             case 2:
-                String result_2 = queryBridgeWords(parameter[0], parameter[1]);
+                String result_2;
+                if (parameter.length ==1 || parameter.length>2){
+                    result_2 = "Please input two words connected with comma!";
+                }else{
+                    result_2 = queryBridgeWords(parameter[0], parameter[1]);
+                    if (result_2 == null){
+                        if (!bridgeWords.isEmpty()) {
+                            result_2 = "The bridge words from \" " + parameter[0] + "\" to \"" + parameter[1] + " \" are: " + String.join(",",bridgeWords) + ".";
+                        }else{
+                            result_2 = "No bridge words from \"" + parameter[0] + " \" to \" " + parameter[1] + "\" !";
+                        }
+                    }
+                }
                 return result_2;
             case 3:
                 String result_3 = generateNewText(input);
                 return result_3;
             case 4:
-                String result_4 = calcShortestPath(parameter[0], parameter[1]);
-                String[] words = result_4.split("[^a-zA-Z]+");
-                if(!words[0].equals("No")){
-                    convertToPic("graph.dot");
-                    showDirectedGraph();
+                String result_4;
+                if (parameter.length ==1 || parameter.length>2){
+                    result_4 = "Please input two words connected with comma!";
+                }else{
+                    result_4 = calcShortestPath(parameter[0], parameter[1]);
+                    String[] words = result_4.split("[^a-zA-Z]+");
+                    if(!words[0].equals("No")){
+                        convertToPic("graph.dot");
+                        showDirectedGraph();
+                    }
                 }
                 return result_4;
             default:
@@ -147,6 +168,8 @@ public class Main extends Application {
         // 创建文本框和标签
         TextField inputField = new TextField();
         TextField resultField = new TextField();
+        inputField.setId("input");
+        resultField.setId("result");
         resultField.setEditable(false); // 设置结果文本框为不可编辑
         processField.setEditable(false); // 设置结果文本框为不可编辑
         // 创建布局
@@ -258,7 +281,7 @@ public class Main extends Application {
                 contentBuilder.append(System.lineSeparator());
             }
         }
-        String[] words = contentBuilder.toString().split("[^a-zA-Z]+");
+        words = contentBuilder.toString().split("[^a-zA-Z]+");
         for (int i = 0; i < words.length - 1; i++) {
             String currentWord = words[i].toLowerCase();
             String nextWord = words[i + 1].toLowerCase();
@@ -308,43 +331,25 @@ public class Main extends Application {
          * 返回类型：String
          * 功能：查找两个词的桥接词，并输出相应结果
          *  */
-        // 检查输入的单词是否在图中出现
-        if (!directedGraph.containsKey(word1) || !directedGraph.containsKey(word2)) {
-            ArrayList<String> wordsNotExit = new ArrayList<>();
-            if (!directedGraph.containsKey(word1)){
-                wordsNotExit.add(word1);
+        String result = null;
+        bridgeWords.clear();
+        String lastWord = words[words.length-1];
+        if(Arrays.asList(words).contains(word1)&&Arrays.asList(words).contains(word2)) {
+            // 遍历 word1 的邻居，查找桥接词
+            if (!word1.equals(lastWord)){
+                Map<String, PathInfo> neighborsOfWord1 = directedGraph.get(word1);
+                for (String bridgeWord : neighborsOfWord1.keySet()) {
+                    if (!bridgeWord.equals(lastWord)) {
+                        if (directedGraph.get(bridgeWord).containsKey(word2)) {
+                            bridgeWords.add(bridgeWord);
+                        }
+                    }
+                }
             }
-            if (!directedGraph.containsKey(word2)){
-                wordsNotExit.add(word2);
-            }
-            if (wordsNotExit.size()!= 2)
-                return "No " + (directedGraph.containsKey(word1) ? "\"" + word2 + "\"" : "\"" + word1 + "\"") + " in the graph!";
-            else
-                return "No " + "\"" + word1 + "\"" + "and" + "\"" + word2 + "\"" + " in the graph!";
+        }else{
+            result =  "No " + word1 + " or " + word2 +" in the graph!";
         }
-        List<String> bridgeWords = new ArrayList<>();
-        // 遍历 word1 的邻居，查找桥接词
-        Map<String, PathInfo> neighborsOfWord1 = directedGraph.get(word1);
-        for (String bridgeWord : neighborsOfWord1.keySet()) {
-            if (directedGraph.containsKey(bridgeWord) && directedGraph.get(bridgeWord).containsKey(word2)) {
-                bridgeWords.add(bridgeWord);
-            }
-        }
-        // 如果不存在桥接词，则返回相应的提示
-        if (bridgeWords.isEmpty()) {
-            return "No bridge words from \"" + word1 + " \" to \" " + word2 + "\" !";
-        }
-        // 存在桥接词，将结果转换为字符串返回
-        StringBuilder result = new StringBuilder("The bridge words from \" " + word1 + "\" to \"" + word2 + " \" are: \"");
-        for (int i = 0; i < bridgeWords.size(); i++) {
-            result.append(bridgeWords.get(i));
-            if (i < bridgeWords.size() - 1) {
-                result.append("\", \"");
-            } else {
-                result.append("\".");
-            }
-        }
-        return result.toString();
+        return result;
     }
     public static String generateNewText(String inputText) {
         /*
@@ -417,7 +422,7 @@ public class Main extends Application {
             }
             Instant end = Instant.now();
             Duration duration = Duration.between(start, end);
-            return "Shortest path(s) from " + word1 + " to " + word2 + ":" + shortestDistance + ",Execution time: " + duration.toMillis() + " ms";
+            return "Shortest path(s) from " + word1 + " to " + word2 + ":" + shortestDistance;
         }
     }
     public static int dijkstraShortestPaths(String currentNode, String endNode, Set<String> visited, List<String> currentPath, List<List<String>> shortestPaths) {
